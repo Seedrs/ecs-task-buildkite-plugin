@@ -1,0 +1,17 @@
+# Config for https://github.com/apps/release-drafter
+template: |
+  ## What's changed?
+
+  $CHANGES
+
+  ## Upgrading
+  To upgrade, update your `pipeline.yml` files:
+
+  ```diff
+    steps:
+      - plugins:
+  -       - seedrs/ecs-task#$PREVIOUS_TAG:
+  +       - seedrs/ecs-task#TODO:
+              cluster: "production-cluster-name"
+              task: "production-task-name"
+  ```

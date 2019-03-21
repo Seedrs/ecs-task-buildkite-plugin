@@ -1,0 +1,18 @@
+name: ECS Task
+description: Runs ECS tasks
+author: https://github.com/Seedrs
+requirements:
+  - aws
+  - jq
+configuration:
+  properties:
+    cluster:
+      type: string
+    task:
+      type: string
+    region:
+      type: string
+  required:
+    - cluster
+    - task
+

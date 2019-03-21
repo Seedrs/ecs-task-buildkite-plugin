@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+main() {
+    local cluster="${BUILDKITE_PLUGIN_ECS_TASK_CLUSTER:-}"
+    local task="${BUILDKITE_PLUGIN_ECS_TASK_TASK:-}"
+    local region="${AWS_DEFAULT_REGION:-${BUILDKITE_PLUGIN_ECS_TASK_REGION:-eu-west-1}}"
+
+    if [[ -n ${cluster} && -n ${task} ]]; then
+        echo "--- Running :amazon-ecs: task [${task}] in cluster [${cluster}]"
+
+        # Try to run task and get the task ARN
+        local task_res=$(aws ecs run-task \
+            --region "${region}" \
+            --cluster "${cluster}" \
+            --task-definition "${task}" \
+            --query "{failures: failures, taskArn: tasks[0].taskArn}")
+        local taskArn=$(echo ${task_res} | jq -r ".taskArn")
+
+        # Check for failures
+        if [[ ${taskArn} = "null" ]]; then
+            echo "--- Error   :amazon-ecs: task [${task}] in cluster [${cluster}] could not be allocated"
+            echo ${task} | jq -r ".failures"
+
+            return 1
+        fi
+
+        # Wait for task to be stopped
+        echo "--- Waiting :amazon-ecs: task to be stopped"
+        echo "Task id: ${taskArn}"
+        aws ecs wait tasks-stopped --cluster "${cluster}" --tasks "${taskArn}"
+
+        # And check the exit code
+        local exitCode=$(aws ecs describe-tasks \
+            --cluster "${cluster}" \
+            --tasks "${taskArn}" \
+            --query "tasks[0].containers[0].exitCode" \
+            --output text \
+            --region "${region}")
+
+        # Check for success
+        if [[ ${exitCode} -eq 0 ]]; then
+            echo "--- Success :amazon-ecs: task was executed successfully"
+            echo "Task id: ${taskArn}"
+
+            return ${exitCode}
+        else
+            echo "--- Error: task execution failed. Check your logs."
+
+            return 1
+        fi
+    else
+        echo >&2 "Missing BUILDKITE_PLUGIN_ECS_TASK_CLUSTER or BUILDKITE_PLUGIN_ECS_TASK_TASK"
+    fi
+}
+
+main
