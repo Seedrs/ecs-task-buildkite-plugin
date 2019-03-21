@@ -1,6 +1,6 @@
 # ECS Task Buildkite Plugin
 
-A [Buildkite plugin](https://buildkite.com/docs/agent/plugins) to deploy ECS services.
+A [Buildkite plugin](https://buildkite.com/docs/agent/plugins) to run ECS tasks.
 
 Credentials for the command need to be added to the environment. You can use
 another plugin to assume a specifc role (e.g [aws-assume-role-buildkite-plugin](https://github.com/Seedrs/aws-assume-role-buildkite-plugin))
